@@ -6,5 +6,5 @@ type User struct {
 	ID              float64 `json:"id"`
 	LastName        string  `json:"last_name"`
 	ProfileImageURL string  `json:"profile_image_url"`
-	URLstring       string  `json:"url"`
+	URL             string  `json:"url"`
 }

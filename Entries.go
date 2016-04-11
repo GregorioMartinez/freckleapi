@@ -31,38 +31,6 @@ type Entry struct {
 	User                        User    `json:"user"`
 }
 
-type Project struct {
-	Billable         bool    `json:"billable"`
-	BillingIncrement float64 `json:"billing_increment"`
-	Color            string  `json:"color"`
-	Enabled          bool    `json:"enabled"`
-	ID               float64 `json:"id"`
-	Name             string  `json:"name"`
-	URL              string  `json:"url"`
-}
-
-type Invoice struct {
-	ID          float64 `json:"id"`
-	InvoiceDate string  `json:"invoice_date"`
-	Reference   string  `json:"reference"`
-	State       string  `json:"state"`
-	TotalAmount float64 `json:"total_amount"`
-	URL         string  `json:"url"`
-}
-
-type Import struct {
-	ID  float64 `json:"id"`
-	URL string  `json:"url"`
-}
-
-type Tag struct {
-	Billable      bool    `json:"billable"`
-	FormattedName string  `json:"formatted_name"`
-	ID            float64 `json:"id"`
-	Name          string  `json:"name"`
-	URL           string  `json:"url"`
-}
-
 type EntryService struct {
 	client *Client
 }
@@ -85,10 +53,13 @@ func (s *EntryService) List() *EntryListCall {
 
 // Should return a url, not a string
 func (c *EntryListCall) Do() (*[]Entry, error) {
-	data, err := c.service.client.run("GET", "entries", nil)
-	if err != nil {
+	data, err := c.service.client.run("GET", "entries", c.args)
+	if err != nil && err != ErrNoMorePages {
 		return nil, err
 	}
+
+	// @TODO This is ugly as fuck, but this gives us the last page error if it happened.
+	oerr := err
 
 	entries := make([]Entry, 0)
 
@@ -97,7 +68,7 @@ func (c *EntryListCall) Do() (*[]Entry, error) {
 		return nil, err
 	}
 
-	return &entries, nil
+	return &entries, oerr
 }
 
 func (c *EntryListCall) Users(user_ids []float64) *EntryListCall {
@@ -113,5 +84,15 @@ func (c *EntryListCall) From(from string) *EntryListCall {
 
 func (c *EntryListCall) To(to string) *EntryListCall {
 	c.args["to"] = to
+	return c
+}
+
+func (c *EntryListCall) Page(page int) *EntryListCall {
+	c.args["page"] = page
+	return c
+}
+
+func (c *EntryListCall) Sort(sort string) *EntryListCall {
+	c.args["sort"] = sort
 	return c
 }
