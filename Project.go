@@ -54,16 +54,24 @@ func (s *ProjectService) List() *ProjectListCall {
 }
 
 func (c *ProjectListCall) Do() (*[]Project, error) {
+	projects := make([]Project, 0)
+
 	data, err := c.service.client.run("GET", "projects", c.args)
-	if err != nil {
-		return nil, err
+	if err != nil && err != ErrNoMorePages{
+		return &projects, err
 	}
 
-	projects := make([]Project, 0)
+	if err == ErrNoMorePages {
+		err1  := json.Unmarshal(data, &projects)
+		if err1  != nil {
+			return &projects, err1
+		}
+		return &projects, err
+	}
 
 	err = json.Unmarshal(data, &projects)
 	if err != nil {
-		return nil, err
+		return &projects, err
 	}
 
 	return &projects, nil
